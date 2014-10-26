@@ -1,0 +1,29 @@
+Reentrancy
+
+* When the kernel raises a signal, a process can be executing code anywhere. For example,
+* it might be in the middle of an important operation that, if interrupted, would leave the
+* process is an inconsistent state—say, with a data structure only half updated or a cal‐
+* culation only partially performed. The process might even be handling another signal.
+* Signal handlers cannot tell what code the process is executing when a signal hits; the
+* handler can run in the middle of anything. It is thus very important that any signal
+* handler your process installs be very careful about the actions it performs and the data
+* it touches. Signal handlers must take care not to make assumptions about what the
+* process was doing when it was interrupted. In particular, they must practice caution
+* when modifying global (that is, shared) data. Indeed, it is a good idea for a signal handler
+* never to touch global data; in an upcoming section, however, we will look at a way to
+* temporarily block the delivery of signals as a way to allow safe manipulation of data
+* shared by a signal handler and the rest of a process.
+* What about system calls and other library functions? What if your process is in the
+* middle of writing to a file or allocating memory, and a signal handler writes to the same
+* file or also invokes malloc() ? Or what if a process is in the middle of a call to a function
+* that uses a static buffer, such as strsignal() , when a signal is delivered?
+
+* Some functions are clearly not reentrant. If a program is in the middle of executing a
+* nonreentrant function and a signal occurs and the signal handler then invokes that same
+* nonreentrant function, chaos can ensue. A reentrant function is a function that is safe
+* to call from within itself (or concurrently, from another thread in the same process). In
+* order to qualify as reentrant, a function must not manipulate static data, must manip‐
+* ulate only stack-allocated data or data provided to it by the caller, and must not invoke
+* any nonreentrant function.
+
+* source : - linux system programming  

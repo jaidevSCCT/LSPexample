@@ -1,0 +1,152 @@
+source :- http://linux.about.com/library/cmd/blcmdl2_sigaction.html
+
+DESCRIPTION
+The sigaction system call is used to change the action taken by a process on receipt of a specific signal.
+
+signum specifies the signal and can be any valid signal except SIGKILL and SIGSTOP.
+
+If act is non-null, the new action for signal signum is installed from act. If oldact is non-null, the previous action is saved in oldact.
+
+The sigaction structure is defined as something like
+
+    struct sigaction {
+        void (*sa_handler)(int);
+        void (*sa_sigaction)(int, siginfo_t *, void *);
+        sigset_t sa_mask;
+        int sa_flags;
+        void (*sa_restorer)(void);
+    }
+
+On some architectures a union is involved - do not assign to both sa_handler and sa_sigaction.
+
+The sa_restorer element is obsolete and should not be used. POSIX does not specify a sa_restorer element.
+
+sa_handler specifies the action to be associated with signum and may be SIG_DFL for the default action, SIG_IGN to ignore this signal, or a pointer to a signal handling function.
+
+sa_mask gives a mask of signals which should be blocked during execution of the signal handler. In addition, the signal which triggered the handler will be blocked, unless the SA_NODEFER or SA_NOMASK flags are used.
+
+sa_flags specifies a set of flags which modify the behaviour of the signal handling process. It is formed by the bitwise OR of zero or more of the following:
+
+    SA_NOCLDSTOP
+        If signum is SIGCHLD, do not receive notification when child processes stop (i.e., when child processes receive one of SIGSTOP, SIGTSTP, SIGTTIN or SIGTTOU). 
+    SA_ONESHOT or SA_RESETHAND
+        Restore the signal action to the default state once the signal handler has been called. 
+    SA_ONSTACK
+        Call the signal handler on an alternate signal stack provided by sigaltstack(2). If an alternate stack is not available, the default stack will be used. 
+    SA_RESTART
+        Provide behaviour compatible with BSD signal semantics by making certain system calls restartable across signals. 
+    SA_NOMASK or SA_NODEFER
+        Do not prevent the signal from being received from within its own signal handler. 
+    SA_SIGINFO
+        The signal handler takes 3 arguments, not one. In this case, sa_sigaction should be set instead of sa_handler. (The sa_sigaction field was added in Linux 2.1.86.) 
+
+The siginfo_t parameter to sa_sigaction is a struct with the following elements
+
+
+    siginfo_t {
+        int      si_signo;  /* Signal number */
+        int      si_errno;  /* An errno value */
+        int      si_code;   /* Signal code */
+        pid_t    si_pid;    /* Sending process ID */
+        uid_t    si_uid;    /* Real user ID of sending process */
+        int      si_status; /* Exit value or signal */
+        clock_t  si_utime;  /* User time consumed */
+        clock_t  si_stime;  /* System time consumed */
+        sigval_t si_value;  /* Signal value */
+        int      si_int;    /* POSIX.1b signal */
+        void *   si_ptr;    /* POSIX.1b signal */
+        void *   si_addr;   /* Memory location which caused fault */
+        int      si_band;   /* Band event */
+        int      si_fd;     /* File descriptor */
+    }
+
+si_signo, si_errno and si_code are defined for all signals. The rest of the struct may be a union, so that one should only read the fields that are meaningful for the given signal. kill(2), POSIX.1b signals and SIGCHLD fill in si_pid and si_uid. SIGCHLDalsofillsin si_status, si_utime and si_stime. si_int and si_ptr are specified by the sender of the POSIX.1b signal. SIGILL, SIGFPE, SIGSEGV and SIGBUS fill in si_addr with the address of the fault. SIGPOLL fills in si_band and si_fd.
+
+si_code indicates why this signal was sent. It is a value, not a bitmask. The values which are possible for any signal are listed in this table:
+si_code
+Value		Signal origin
+SI_USER		kill, sigsend or raise
+SI_KERNEL	The kernel
+SI_QUEUE	sigqueue
+SI_TIMER	timer expired
+SI_MESGQ	mesq state changed
+SI_ASYNCIO	AIO completed
+SI_SIGIO	queued SIGIO
+
+SIGILL
+ILL_ILLOPC	illegal opcode
+ILL_ILLOPN	illegal operand
+ILL_ILLADR	illegal addressing mode
+ILL_ILLTRP	illegal trap
+ILL_PRVOPC	privileged opcode
+ILL_PRVREG	privileged register
+ILL_COPROC	coprocessor error
+ILL_BADSTK	internal stack error
+
+SIGFPE
+FPE_INTDIV	integer divide by zero
+FPE_INTOVF	integer overflow
+FPE_FLTDIV	floating point divide by zero
+FPE_FLTOVF	floating point overflow
+FPE_FLTUND	floating point underflow
+FPE_FLTRES	floating point inexact result
+FPE_FLTINV	floating point invalid operation
+FPE_FLTSUB	subscript out of range
+
+SIGSEGV
+SEGV_MAPERR	address not mapped to object
+SEGV_ACCERR	invalid permissions for mapped object
+
+SIGBUS
+BUS_ADRALN	invalid address alignment
+BUS_ADRERR	non-existent physical address
+BUS_OBJERR	object specific hardware error
+
+SIGTRAP
+TRAP_BRKPT	process breakpoint
+TRAP_TRACE	process trace trap
+
+SIGCHLD
+CLD_EXITED	child has exited
+CLD_KILLED	child was killed
+CLD_DUMPED	child terminated abnormally
+CLD_TRAPPED	traced child has trapped
+CLD_STOPPED	child has stopped
+CLD_CONTINUED	stopped child has continued
+
+SIGPOLL
+POLL_IN		data input available
+POLL_OUT	output buffers available
+POLL_MSG	input message available
+POLL_ERR	i/o error
+POLL_PRI	high priority input available
+POLL_HUP	device disconnected
+
+The sigprocmask call is used to change the list of currently blocked signals. The behaviour of the call is dependent on the value of how, as follows.
+
+    SIG_BLOCK
+        The set of blocked signals is the union of the current set and the set argument. 
+    SIG_UNBLOCK
+        The signals in set are removed from the current set of blocked signals. It is legal to attempt to unblock a signal which is not blocked. 
+    SIG_SETMASK
+        The set of blocked signals is set to the argument set. 
+
+If oldset is non-null, the previous value of the signal mask is stored in oldset.
+
+The sigpending call allows the examination of pending signals (ones which have been raised while blocked). The signal mask of pending signals is stored in set.
+
+The sigsuspend call temporarily replaces the signal mask for the process with that given by mask and then suspends the process until a signal is received.
+
+ 
+RETURN VALUE
+The functions sigaction, sigprocmask, and sigpending return 0 on success and -1 on error. The function sigsuspend always returns -1, normally with the error EINTR.
+
+ 
+ERRORS
+
+EINVAL
+    An invalid signal was specified. This will also be generated if an attempt is made to change the action for SIGKILL or SIGSTOP, which cannot be caught. 
+EFAULT
+    act, oldact, set, oldset or mask point to memory which is not a valid part of the process address space. 
+EINTR
+    System call was interrupted. 

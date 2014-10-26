@@ -1,0 +1,17 @@
+Resetting scheduling policy for child processes
+Since Linux 2.6.32, the SCHED_RESET_ON_FORK flag can be ORed in policy when calling sched_setscheduler().  As a result  of  including
+this  flag,  children  created by fork(2) do not inherit privileged scheduling policies.  This feature is intended for media-playback
+applications, and can be used to prevent applications evading the RLIMIT_RTTIME resource limit (see getrlimit(2)) by creating  multi‐
+ple child processes.
+
+More precisely, if the SCHED_RESET_ON_FORK flag is specified, the following rules apply for subsequently created children:
+
+*  If the calling process has a scheduling policy of SCHED_FIFO or SCHED_RR, the policy is reset to SCHED_OTHER in child processes.
+
+*  If the calling process has a negative nice value, the nice value is reset to zero in child processes.
+
+After  the SCHED_RESET_ON_FORK flag has been enabled, it can only be reset if the process has the CAP_SYS_NICE capability.  This flag
+is disabled in child processes created by fork(2).
+
+The SCHED_RESET_ON_FORK flag is visible in the policy value returned by sched_getscheduler()
+

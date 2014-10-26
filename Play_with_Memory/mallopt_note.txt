@@ -1,0 +1,77 @@
+For mor information see man mallopt(3) and http://manpages.ubuntu.com/manpages/precise/man3/mallopt.3.html
+When calling mallopt, the param argument specifies the parameter to be set, 
+     and value the new value to be set. Possible choices for param, as defined in malloc.h, are:
+
+     M_MMAP_MAX
+
+     The maximum number of chunks to allocate with mmap. Setting this to zero disables all use of mmap. 
+     M_MMAP_THRESHOLD
+
+     All chunks larger than this value are allocated outside the normal heap, using the mmap system call.
+     This way it is guaranteed that the memory for these chunks can be returned to the system on free.
+     Note that requests smaller than this threshold might still be allocated via mmap. 
+     M_PERTURB
+
+     If non-zero, memory blocks are filled with values depending on some low order bits of this parameter
+     when they are allocated (except when allocated by calloc) and freed.
+     This can be used to debug the use of uninitialized or freed heap memory. 
+     Note that this option does not guarantee that the freed block will have any specific values. 
+     It only guarantees that the content the block had before it was freed will be overwritten. 
+     M_TOP_PAD
+
+     This parameter determines the amount of extra memory to obtain from the system when a call to sbrk is required. 
+     It also specifies the number of bytes to retain when shrinking the heap by calling sbrk with a negative argument.
+     This provides the necessary hysteresis in heap size such that excessive amounts of system calls can be avoided. 
+     M_TRIM_THRESHOLD
+
+     This is the minimum size (in bytes) of the top-most, releasable chunk that will cause sbrk to be called 
+     with a negative argument in order to return memory to the system. 
+
+     M_MXFAST
+     Free chunks not larger than the given value are  not  joined  to
+     adjacent  free chunks; larger ones are joined.  This is intended
+     to optimize future requests for small chunks of the same size as
+     previously  freed  chunks.   Allowed  values  are  in  the range
+     [0-80]; a value of 0  causes  all  free  chunks  to  be  joined.
+     Default: 64.
+
+     Environment Variables
+     A number of environment variables can be defined to modify some of the same parameters as are controlled by mallopt().  
+     Using  these variables  has  the  advantage  that  the  source  code of the program need not be changed.  
+	To be effective, these variables must be defined before the first call to a memory-allocation function. 
+(If the same parameters are adjusted via mallopt() then the mallopt() settings take precedence.) 
+	For security reasons, these variables are ignored in set-user-ID and set-group-ID programs.
+
+	The environment variables are as follows (note the trailing underscore at the end of the name of each variable):
+
+		MALLOC_CHECK_
+		This  environment  variable  controls  the  same  parameter as mallopt() M_CHECK_ACTION. 
+	If this variable is set to a nonzero value, then a special implementation of the memory-allocation functions  is  used. 
+(This  is  accomplished  using  the  malloc_hook(3)  feature.)  
+	This implementation performs additional error checking, but is slower than the standard set of memory allocation functions.  
+	(This implementation does not detect all possible errors; memory leaks can still occur.)
+
+	The value assigned to this environment variable should be a single digit, 
+	whose meaning is as  described  for  M_CHECK_ACTION.Any characters beyond the initial digit are ignored.
+
+	For  security reasons, the effect of MALLOC_CHECK_ is disabled by default for set-user-ID and set-group-ID programs. 
+	However,if the file /etc/suid-debug exists (the content of the file is irrelevant), 
+	then MALLOC_CHECK_ also has  an  effect  for  set user-ID and set-group-ID programs.
+
+	MALLOC_MMAP_MAX_
+	Controls the same parameter as mallopt() M_MMAP_MAX.
+
+	MALLOC_MMAP_THRESHOLD_
+	Controls the same parameter as mallopt() M_MMAP_THRESHOLD.
+
+	MALLOC_PERTURB_
+	Controls the same parameter as mallopt() M_PERTURB.
+
+	MALLOC_TRIM_THRESHOLD_
+	Controls the same parameter as mallopt() M_TRIM_THRESHOLD.
+
+	MALLOC_TOP_PAD_
+	Controls the same parameter as mallopt() M_TOP_PAD.
+
+	RETURN VALUE
+	On success, mallopt() returns 1.  On error, it returns 0.
